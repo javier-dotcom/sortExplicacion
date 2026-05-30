@@ -55,7 +55,7 @@ button:disabled{opacity:0.4;cursor:not-allowed;}
 .arr{color:#34d399;}         /* array access arr[] */
 #info-panel{border-top:1px solid #ffffff0a;padding:0.55rem 0.7rem;background:#080811;font-size:0.62rem;line-height:1.6;}
 .info-algo-name{font-family:'Outfit',sans-serif;font-weight:800;font-size:0.85rem;margin-bottom:0.3rem;}
-.info-desc{margin-bottom:0.35rem;line-height:1.6;color:#94a3b8;}
+.info-desc{margin-bottom:0.35rem;line-height:1.7;font-size:0.82rem;font-family:'Outfit',sans-serif;font-weight:500;}
 .info-badges{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.3rem;}
 .badge{font-family:'Outfit',sans-serif;font-weight:700;font-size:0.65rem;padding:2px 8px;border-radius:99px;}
 .divider{width:100%;height:1px;background:#ffffff08;margin:0.3rem 0;}
@@ -210,7 +210,7 @@ const ALGOS = {
     name:"Quick Sort",time:"O(n log n)",best:"O(n log n)",space:"O(log n)",
     rank:1,rankColor:"#10b981",
     desc:"Elige un pivote, pone menores a la izquierda y mayores a la derecha, repite. El más rápido en la práctica. Mínima memoria.",
-    use:"La opción por defecto. El más usado en producción.",
+    use:"El más usado cuando lo implementás vos. Ojo: JS internamente usa TimSort, no Quick Sort.",
     badges:[{l:"Peor: O(n²)*",c:"#fbbf24",b:"#fbbf2422"},{l:"Promedio: O(n log n)",c:"#10b981",b:"#10b98122"},{l:"Espacio: O(log n)",c:"#06b6d4",b:"#06b6d422"},{l:"⚡ Rank #1",c:"#10b981",b:"#10b98133"}],
     code:[
       [["va","pivot"],["op"," = "],["arr","arr[r]"]],
@@ -282,7 +282,9 @@ function updateInfo(){
   document.getElementById('s-cmplx').textContent=a.time;
   document.getElementById('info-name').textContent=a.name;
   document.getElementById('info-name').style.color=a.rankColor;
-  document.getElementById('info-desc').textContent=a.desc;
+  const descEl=document.getElementById('info-desc');
+  descEl.textContent=a.desc;
+  descEl.style.color=a.rankColor;
   document.getElementById('info-use').textContent=a.use;
   const bd=document.getElementById('info-badges'); bd.innerHTML='';
   a.badges.forEach(b=>{
