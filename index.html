@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorting Visualizer</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;600;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#080811;color:#e2e8f0;font-family:'JetBrains Mono',monospace;display:flex;flex-direction:column;height:100vh;overflow:hidden;font-size:13px;}
+button{cursor:pointer;font-family:'JetBrains Mono',monospace;}
+button:disabled{opacity:0.4;cursor:not-allowed;}
+#header{background:#0f0f1a;border-bottom:1px solid #ffffff0f;padding:0.5rem 0.8rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;}
+.logo{font-family:'Outfit',sans-serif;font-weight:800;font-size:1rem;letter-spacing:-0.02em;margin-right:0.4rem;}
+.logo span{color:#8b5cf6;}
+.algo-btn-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.rank-badge{font-size:0.52rem;font-family:'Outfit',sans-serif;font-weight:800;padding:1px 5px;border-radius:99px;letter-spacing:0.04em;}
+.algo-btn{font-family:'Outfit',sans-serif;font-weight:600;font-size:0.7rem;border:1px solid #ffffff0f;background:transparent;color:#475569;border-radius:6px;padding:0.28rem 0.6rem;transition:all 0.15s;white-space:nowrap;}
+.algo-btn.active{border-color:#8b5cf6;background:#6d28d933;color:#a78bfa;}
+.speed-wrap{display:flex;align-items:center;gap:0.4rem;font-size:0.62rem;color:#475569;margin-left:auto;}
+.speed-wrap input{accent-color:#8b5cf6;width:65px;}
+.btn-reset{font-family:'Outfit',sans-serif;font-weight:600;font-size:0.7rem;background:transparent;color:#475569;border:1px solid #ffffff0f;border-radius:6px;padding:0.28rem 0.6rem;}
+.btn-run{font-family:'Outfit',sans-serif;font-weight:700;font-size:0.7rem;background:#6d28d9;color:#fff;border:none;border-radius:6px;padding:0.28rem 0.8rem;box-shadow:0 0 12px #6d28d966;}
+.btn-run:disabled{background:#374151;box-shadow:none;}
+.btn-stop{font-family:'Outfit',sans-serif;font-weight:700;font-size:0.7rem;background:#f43f5e;color:#fff;border:none;border-radius:6px;padding:0.28rem 0.8rem;box-shadow:0 0 10px #f43f5e66;display:none;}
+#stats{background:#0d0d1c;border-bottom:1px solid #ffffff0a;padding:0.3rem 0.8rem;display:flex;gap:1.2rem;font-size:0.65rem;flex-wrap:wrap;align-items:center;}
+.stat .val{font-weight:700;} .stat .lbl{color:#334155;} .stat{display:flex;gap:0.35rem;align-items:baseline;}
+#progress-bar{height:2px;background:#0f0f1a;}
+#progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#6d28d9,#10b981);transition:width 0.1s;}
+#main{flex:1;display:flex;min-height:0;overflow:hidden;}
+#left{flex:1;display:flex;flex-direction:column;border-right:1px solid #ffffff0a;min-width:0;}
+#panel-label-left{padding:0.35rem 0.6rem;border-bottom:1px solid #ffffff0a;font-size:0.58rem;color:#334155;display:flex;gap:0.8rem;align-items:center;}
+#bars-wrap{flex:1;display:flex;align-items:flex-end;gap:2px;padding:8px 8px 0;background:#080811;min-height:0;}
+.bar{flex:1;min-width:2px;border-radius:2px 2px 0 0;transition:background 0.05s,box-shadow 0.05s;}
+#right{width:45%;min-width:220px;display:flex;flex-direction:column;background:#0a0a14;min-height:0;}
+#panel-label-right{padding:0.35rem 0.6rem;border-bottom:1px solid #ffffff0a;font-size:0.58rem;color:#334155;}
+#numbers-wrap{padding:0.5rem 0.6rem;border-bottom:1px solid #ffffff0a;display:flex;flex-wrap:wrap;gap:3px;background:#080811;}
+.num-cell{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:5px;font-size:0.65rem;transition:all 0.06s;border:1px solid #1e1e35;color:#334155;}
+#code-label{padding:0.35rem 0.6rem;border-bottom:1px solid #ffffff0a;font-size:0.58rem;color:#334155;display:flex;justify-content:space-between;}
+#code-label span{color:#8b5cf6;}
+#code-wrap{padding:0.4rem 0;overflow-y:auto;}
+.code-line{display:flex;align-items:center;gap:0.5rem;padding:0.22rem 0.6rem;border-left:2px solid transparent;transition:background 0.08s;}
+.code-line.active{background:rgba(109,40,217,0.22);border-left-color:#8b5cf6;}
+.code-line .ln{font-size:0.6rem;min-width:14px;text-align:right;color:#1e2a3a;}
+.code-line.active .ln{color:#8b5cf6;}
+.code-line .ct{font-size:0.7rem;white-space:pre;}
+/* Syntax tokens */
+.kw{color:#c084fc;}          /* keywords: for, let, if, while, return */
+.fn{color:#60a5fa;}          /* functions: swap, mergeSort, quickSort */
+.num{color:#fb923c;}         /* numbers */
+.op{color:#f472b6;}          /* operators: >, <, <=, >=, === */
+.cm{color:#374151;font-style:italic;} /* comments */
+.va{color:#94a3b8;}          /* variables */
+.pu{color:#e2e8f0;}          /* punctuation */
+.arr{color:#34d399;}         /* array access arr[] */
+#info-panel{border-top:1px solid #ffffff0a;padding:0.55rem 0.7rem;background:#080811;font-size:0.62rem;line-height:1.6;}
+.info-algo-name{font-family:'Outfit',sans-serif;font-weight:800;font-size:0.85rem;margin-bottom:0.3rem;}
+.info-desc{margin-bottom:0.35rem;line-height:1.6;color:#94a3b8;}
+.info-badges{display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:0.3rem;}
+.badge{font-family:'Outfit',sans-serif;font-weight:700;font-size:0.65rem;padding:2px 8px;border-radius:99px;}
+.divider{width:100%;height:1px;background:#ffffff08;margin:0.3rem 0;}
+.info-row{display:flex;align-items:baseline;gap:0.4rem;margin-bottom:0.15rem;}
+#done-msg{color:#10b981;margin-left:auto;}
+#stopped-msg{color:#f43f5e;margin-left:auto;display:none;}
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="logo"><span>sort</span>.visual</div>
+  <div class="algo-btn-wrap">
+    <span class="rank-badge" style="background:#f43f5e22;color:#f43f5e">#5 más lento</span>
+    <button class="algo-btn active" onclick="setAlgo('bubble',this)">Bubble</button>
+  </div>
+  <div class="algo-btn-wrap">
+    <span class="rank-badge" style="background:#fb923c22;color:#fb923c">#4</span>
+    <button class="algo-btn" onclick="setAlgo('selection',this)">Selection</button>
+  </div>
+  <div class="algo-btn-wrap">
+    <span class="rank-badge" style="background:#fbbf2422;color:#fbbf24">#3</span>
+    <button class="algo-btn" onclick="setAlgo('insertion',this)">Insertion</button>
+  </div>
+  <div class="algo-btn-wrap">
+    <span class="rank-badge" style="background:#34d39922;color:#34d399">#2</span>
+    <button class="algo-btn" onclick="setAlgo('merge',this)">Merge</button>
+  </div>
+  <div class="algo-btn-wrap">
+    <span class="rank-badge" style="background:#10b98133;color:#10b981">#1 más rápido</span>
+    <button class="algo-btn" onclick="setAlgo('quick',this)">Quick</button>
+  </div>
+  <div class="speed-wrap">vel <input type="range" id="speed" min="1" max="10" value="5"> <span id="speed-val">5</span>x</div>
+  <button class="btn-reset" id="btn-reset" onclick="newArray()">↺ Reset</button>
+  <button class="btn-run"  id="btn-run"  onclick="startSort()">▶ Ejecutar</button>
+  <button class="btn-stop" id="btn-stop" onclick="stopSort()">■ Detener</button>
+</div>
+
+<div id="stats">
+  <div class="stat"><span class="val" id="s-comps" style="color:#fbbf24">0</span><span class="lbl">Comparaciones</span></div>
+  <div class="stat"><span class="val" id="s-swaps" style="color:#f43f5e">0</span><span class="lbl">Intercambios</span></div>
+  <div class="stat"><span class="val" id="s-time"  style="color:#10b981">0ms</span><span class="lbl">Tiempo</span></div>
+  <div class="stat"><span class="val" id="s-cmplx" style="color:#06b6d4">O(n²)</span><span class="lbl">Complejidad</span></div>
+  <span id="done-msg"    style="display:none">✓ ordenado</span>
+  <span id="stopped-msg" style="display:none">⬛ detenido</span>
+</div>
+
+<div id="progress-bar"><div id="progress-fill"></div></div>
+
+<div id="main">
+  <div id="left">
+    <div id="panel-label-left">
+      <span>BARRAS</span>
+      <span style="color:#fbbf24">● comparando</span>
+      <span style="color:#f43f5e">● intercambiando</span>
+      <span style="color:#10b981">● ordenado</span>
+      <span style="color:#06b6d4">● pivote</span>
+    </div>
+    <div id="bars-wrap"></div>
+  </div>
+
+  <div id="right">
+    <div id="panel-label-right">ARRAY EN TIEMPO REAL</div>
+    <div id="numbers-wrap"></div>
+    <div id="code-label">PSEUDOCÓDIGO <span id="line-indicator"></span></div>
+    <div id="code-wrap"></div>
+    <div id="info-panel">
+      <div class="info-algo-name" id="info-name"></div>
+      <div class="info-desc"      id="info-desc"></div>
+      <div class="info-badges"    id="info-badges"></div>
+      <div class="divider"></div>
+      <div class="info-row">
+        <span style="color:#475569;font-size:0.6rem">💡 Cuándo usarlo:</span>
+        <span id="info-use" style="color:#64748b;font-size:0.6rem;font-style:italic;"></span>
+      </div>
+      <div class="info-row">
+        <span style="color:#475569;font-size:0.6rem">🌐 JS nativo:</span>
+        <span style="font-size:0.6rem"><span style="color:#60a5fa">Array.sort()</span> usa <span style="color:#a78bfa">TimSort</span> = <span style="color:#10b981">Merge</span> + <span style="color:#fbbf24">Insertion</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const N = 32;
+
+// ── Definición de algoritmos con código TOKENIZADO ──────────────────────
+// Cada línea es array de tokens: [tipo, texto]
+// tipos: kw fn num op cm va pu arr
+const ALGOS = {
+  bubble:{
+    name:"Bubble Sort",time:"O(n²)",best:"O(n)",space:"O(1)",
+    rank:5,rankColor:"#f43f5e",
+    desc:"Compara pares vecinos y los intercambia si están desordenados. Repite hasta que no hay intercambios. El más simple de entender, el más lento de usar.",
+    use:"Solo para aprender. Nunca en producción.",
+    badges:[{l:"Peor: O(n²)",c:"#f43f5e",b:"#f43f5e22"},{l:"Mejor: O(n)",c:"#10b981",b:"#10b98122"},{l:"Espacio: O(1)",c:"#06b6d4",b:"#06b6d422"},{l:"Rank #5",c:"#f43f5e",b:"#f43f5e22"}],
+    code:[
+      [["kw","for"],["pu"," ("],["kw","let"],["va"," i"],["op"," = "],["num","0"],["pu","; "],["va","i"],["op"," < "],["va","n"],["op","-"],["num","1"],["pu","; "],["va","i"],["op","++"],["pu",")"]],
+      [["pu","  "],["kw","for"],["pu"," ("],["kw","let"],["va"," j"],["op"," = "],["num","0"],["pu","; "],["va","j"],["op"," < "],["va","n"],["op","-"],["num","1"],["op","-"],["va","i"],["pu","; "],["va","j"],["op","++"],["pu",")"]],
+      [["pu","    "],["kw","if"],["pu"," ("],["arr","arr[j]"],["op"," > "],["arr","arr[j+1]"],["pu",")"]],
+      [["pu","      "],["fn","swap"],["pu","("],["va","arr"],["pu",", "],["va","j"],["pu",", "],["va","j"],["op","+"],["num","1"],["pu",")"]],
+      [["cm","  // posición n-1-i queda fija ✓"]],
+    ]
+  },
+  selection:{
+    name:"Selection Sort",time:"O(n²)",best:"O(n²)",space:"O(1)",
+    rank:4,rankColor:"#fb923c",
+    desc:"En cada pasada encuentra el mínimo y lo coloca al inicio. Pocos intercambios pero siempre recorre todo el array sin atajos.",
+    use:"Arrays pequeños donde los writes son costosos.",
+    badges:[{l:"Peor: O(n²)",c:"#f43f5e",b:"#f43f5e22"},{l:"Mejor: O(n²)",c:"#fb923c",b:"#fb923c22"},{l:"Espacio: O(1)",c:"#06b6d4",b:"#06b6d422"},{l:"Rank #4",c:"#fb923c",b:"#fb923c22"}],
+    code:[
+      [["kw","for"],["pu"," ("],["kw","let"],["va"," i"],["op"," = "],["num","0"],["pu","; "],["va","i"],["op"," < "],["va","n"],["op","-"],["num","1"],["pu","; "],["va","i"],["op","++"],["pu",")"]],
+      [["pu","  "],["kw","let"],["va"," minIdx"],["op"," = "],["va","i"]],
+      [["pu","  "],["kw","for"],["pu"," ("],["kw","let"],["va"," j"],["op"," = "],["va","i"],["op","+"],["num","1"],["pu","; "],["va","j"],["op"," < "],["va","n"],["pu","; "],["va","j"],["op","++"],["pu",")"]],
+      [["pu","    "],["kw","if"],["pu"," ("],["arr","arr[j]"],["op"," < "],["arr","arr[minIdx]"],["pu",")"]],
+      [["pu","      "],["va","minIdx"],["op"," = "],["va","j"]],
+      [["pu","  "],["fn","swap"],["pu","("],["va","arr"],["pu",", "],["va","i"],["pu",", "],["va","minIdx"],["pu",")"]],
+    ]
+  },
+  insertion:{
+    name:"Insertion Sort",time:"O(n²)",best:"O(n)",space:"O(1)",
+    rank:3,rankColor:"#fbbf24",
+    desc:"Como ordenar cartas en la mano. Toma cada elemento y lo inserta en su posición correcta. Brillante con arrays casi ordenados.",
+    use:"Arrays pequeños o casi ordenados. Base del TimSort.",
+    badges:[{l:"Peor: O(n²)",c:"#f43f5e",b:"#f43f5e22"},{l:"Mejor: O(n)",c:"#10b981",b:"#10b98122"},{l:"Espacio: O(1)",c:"#06b6d4",b:"#06b6d422"},{l:"Rank #3",c:"#fbbf24",b:"#fbbf2422"}],
+    code:[
+      [["kw","for"],["pu"," ("],["kw","let"],["va"," i"],["op"," = "],["num","1"],["pu","; "],["va","i"],["op"," < "],["va","n"],["pu","; "],["va","i"],["op","++"],["pu",")"]],
+      [["pu","  "],["kw","let"],["va"," key"],["op"," = "],["arr","arr[i]"]],
+      [["pu","  "],["kw","let"],["va"," j"],["op"," = "],["va","i"],["op"," - "],["num","1"]],
+      [["pu","  "],["kw","while"],["pu"," ("],["va","j"],["op"," >= "],["num","0"],["op"," && "],["arr","arr[j]"],["op"," > "],["va","key"],["pu",")"]],
+      [["pu","    "],["arr","arr[j+1]"],["op"," = "],["arr","arr[j]"],["pu","; "],["va","j"],["op","--"]],
+      [["pu","  "],["arr","arr[j+1]"],["op"," = "],["va","key"],["pu","  "],["cm","// insertar"]],
+    ]
+  },
+  merge:{
+    name:"Merge Sort",time:"O(n log n)",best:"O(n log n)",space:"O(n)",
+    rank:2,rankColor:"#34d399",
+    desc:"Divide el array a la mitad recursivamente, ordena cada parte y las fusiona. Siempre O(n log n). Base del TimSort de JavaScript.",
+    use:"Grandes volúmenes. Cuando necesitás estabilidad garantizada.",
+    badges:[{l:"Peor: O(n log n)",c:"#10b981",b:"#10b98122"},{l:"Mejor: O(n log n)",c:"#10b981",b:"#10b98122"},{l:"Espacio: O(n)",c:"#fb923c",b:"#fb923c22"},{l:"Rank #2",c:"#34d399",b:"#34d39922"}],
+    code:[
+      [["fn","mergeSort"],["pu","("],["va","arr"],["pu",", "],["num","0"],["pu",", "],["va","n"],["op","-"],["num","1"],["pu",")"]],
+      [["pu","  "],["va","mid"],["op"," = "],["pu","("],["va","l"],["op"," + "],["va","r"],["pu",") / "],["num","2"]],
+      [["pu","  "],["fn","mergeSort"],["pu","("],["va","arr"],["pu",", "],["va","l"],["pu",", "],["va","mid"],["pu",")"]],
+      [["pu","  "],["fn","mergeSort"],["pu","("],["va","arr"],["pu",", "],["va","mid"],["op","+"],["num","1"],["pu",", "],["va","r"],["pu",")"]],
+      [["cm","  // fusionar mitades ordenadas"]],
+      [["pu","  "],["kw","while"],["pu"," ("],["va","i"],["op","<="],["va","mid"],["op"," && "],["va","j"],["op","<="],["va","r"],["pu",")"]],
+      [["pu","    "],["va","result"],["pu","."],["fn","push"],["pu","("],["cm","menor de ambos"],["pu",")"]],
+    ]
+  },
+  quick:{
+    name:"Quick Sort",time:"O(n log n)",best:"O(n log n)",space:"O(log n)",
+    rank:1,rankColor:"#10b981",
+    desc:"Elige un pivote, pone menores a la izquierda y mayores a la derecha, repite. El más rápido en la práctica. Mínima memoria.",
+    use:"La opción por defecto. El más usado en producción.",
+    badges:[{l:"Peor: O(n²)*",c:"#fbbf24",b:"#fbbf2422"},{l:"Promedio: O(n log n)",c:"#10b981",b:"#10b98122"},{l:"Espacio: O(log n)",c:"#06b6d4",b:"#06b6d422"},{l:"⚡ Rank #1",c:"#10b981",b:"#10b98133"}],
+    code:[
+      [["va","pivot"],["op"," = "],["arr","arr[r]"]],
+      [["kw","for"],["pu"," ("],["kw","let"],["va"," j"],["op"," = "],["va","l"],["pu","; "],["va","j"],["op"," < "],["va","r"],["pu","; "],["va","j"],["op","++"],["pu",")"]],
+      [["pu","  "],["kw","if"],["pu"," ("],["arr","arr[j]"],["op"," <= "],["va","pivot"],["pu",")"]],
+      [["pu","    "],["fn","swap"],["pu","("],["va","arr"],["pu",", ++"],["va","i"],["pu",", "],["va","j"],["pu",")"]],
+      [["fn","swap"],["pu","("],["va","arr"],["pu",", "],["va","i"],["op","+"],["num","1"],["pu",", "],["va","r"],["pu",")  "],["cm","// pivot ok"]],
+      [["fn","quickSort"],["pu","("],["va","arr"],["pu",", "],["va","l"],["pu",", "],["va","i"],["pu",")"]],
+      [["fn","quickSort"],["pu","("],["va","arr"],["pu",", "],["va","i"],["op","+"],["num","2"],["pu",", "],["va","r"],["pu",")"]],
+    ]
+  }
+};
+
+const BAR_BG  = {default:"#1a1a2e",comparing:"#fbbf24",swapping:"#f43f5e",sorted:"#10b981",pivot:"#06b6d4"};
+const BAR_SH  = {default:"none",comparing:"0 0 8px #fbbf2499",swapping:"0 0 10px #f43f5e99",sorted:"0 0 6px #10b98166",pivot:"0 0 10px #06b6d499"};
+const NUM_COL = {default:"#334155",comparing:"#fbbf24",swapping:"#f43f5e",sorted:"#10b981",pivot:"#06b6d4"};
+const NUM_BG2 = {default:"transparent",comparing:"#fbbf2420",swapping:"#f43f5e20",sorted:"#10b98115",pivot:"#06b6d420"};
+const NUM_BD  = {default:"#1e1e35",comparing:"#fbbf24",swapping:"#f43f5e",sorted:"#10b981",pivot:"#06b6d4"};
+
+let array=[],colors=[],bars=[],cells=[],codeLines=[];
+let running=false,stopped=false,algo="bubble";
+let comps=0,swaps=0,startTime=0;
+
+document.getElementById('speed').addEventListener('input',e=>{
+  document.getElementById('speed-val').textContent=e.target.value;
+});
+
+function getDelay(){ return Math.max(8,Math.round(200/parseInt(document.getElementById('speed').value))); }
+function sleep(){ return new Promise(r=>setTimeout(r,getDelay())); }
+function randArr(){ return Array.from({length:N},()=>Math.floor(Math.random()*88)+12); }
+
+function buildBars(){
+  const w=document.getElementById('bars-wrap'); w.innerHTML=''; bars=[];
+  const max=Math.max(...array);
+  array.forEach(v=>{
+    const d=document.createElement('div'); d.className='bar';
+    d.style.height=`${(v/max)*100}%`; d.style.background=BAR_BG.default;
+    w.appendChild(d); bars.push(d);
+  });
+}
+
+function buildNumbers(){
+  const w=document.getElementById('numbers-wrap'); w.innerHTML=''; cells=[];
+  array.forEach(v=>{
+    const d=document.createElement('div'); d.className='num-cell'; d.textContent=v;
+    w.appendChild(d); cells.push(d);
+  });
+}
+
+function renderToken(type,text){
+  const s=document.createElement('span');
+  s.className=type; s.textContent=text; return s;
+}
+
+function buildCode(){
+  const w=document.getElementById('code-wrap'); w.innerHTML=''; codeLines=[];
+  ALGOS[algo].code.forEach((tokens,i)=>{
+    const row=document.createElement('div'); row.className='code-line';
+    const ln=document.createElement('span'); ln.className='ln'; ln.textContent=i+1;
+    const ct=document.createElement('span'); ct.className='ct';
+    tokens.forEach(([type,text])=> ct.appendChild(renderToken(type,text)));
+    row.appendChild(ln); row.appendChild(ct);
+    w.appendChild(row); codeLines.push(row);
+  });
+}
+
+function updateInfo(){
+  const a=ALGOS[algo];
+  document.getElementById('s-cmplx').textContent=a.time;
+  document.getElementById('info-name').textContent=a.name;
+  document.getElementById('info-name').style.color=a.rankColor;
+  document.getElementById('info-desc').textContent=a.desc;
+  document.getElementById('info-use').textContent=a.use;
+  const bd=document.getElementById('info-badges'); bd.innerHTML='';
+  a.badges.forEach(b=>{
+    const s=document.createElement('span'); s.className='badge';
+    s.textContent=b.l; s.style.color=b.c; s.style.background=b.b;
+    bd.appendChild(s);
+  });
+}
+
+function newArray(){
+  if(running)return;
+  array=randArr(); colors=Array(N).fill('default');
+  comps=0; swaps=0;
+  ['s-comps','s-swaps'].forEach(id=>document.getElementById(id).textContent='0');
+  document.getElementById('s-time').textContent='0ms';
+  document.getElementById('progress-fill').style.width='0%';
+  document.getElementById('done-msg').style.display='none';
+  document.getElementById('stopped-msg').style.display='none';
+  document.getElementById('line-indicator').textContent='';
+  buildBars(); buildNumbers(); buildCode();
+}
+
+function setAlgo(name,btn){
+  if(running)return;
+  algo=name;
+  document.querySelectorAll('.algo-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateInfo(); newArray();
+}
+
+function stopSort(){
+  stopped=true;
+}
+
+function setRunningUI(on){
+  document.getElementById('btn-run').style.display=on?'none':'inline-block';
+  document.getElementById('btn-stop').style.display=on?'inline-block':'none';
+  document.getElementById('btn-reset').disabled=on;
+  document.querySelectorAll('.algo-btn').forEach(b=>b.disabled=on);
+}
+
+function flush(idxs,ln){
+  const max=Math.max(...array);
+  bars.forEach((b,i)=>{
+    b.style.background=BAR_BG[colors[i]]||BAR_BG.default;
+    b.style.boxShadow=BAR_SH[colors[i]]||'none';
+    b.style.height=`${(array[i]/max)*100}%`;
+  });
+  cells.forEach((c,i)=>{
+    const st=colors[i]||'default', active=idxs&&idxs.includes(i);
+    c.textContent=array[i];
+    c.style.color=NUM_COL[st];
+    c.style.background=active?NUM_BG2[st]:(st==='sorted'?'#10b98112':'transparent');
+    c.style.borderColor=NUM_BD[st];
+    c.style.transform=active?'scale(1.12)':'scale(1)';
+    c.style.fontWeight=active?'700':'400';
+    c.style.boxShadow=active?`0 0 8px ${NUM_COL[st]}55`:'none';
+  });
+  document.getElementById('s-comps').textContent=comps.toLocaleString();
+  document.getElementById('s-swaps').textContent=swaps.toLocaleString();
+  document.getElementById('s-time').textContent=`${Date.now()-startTime}ms`;
+  codeLines.forEach((cl,i)=>cl.classList.toggle('active',ln===i+1));
+  if(ln) document.getElementById('line-indicator').textContent=`línea ${ln}`;
+}
+
+async function hl(ln,idxs=[]){
+  if(stopped) throw 'stopped';
+  flush(idxs,ln); await sleep();
+}
+async function comp(i,j,ln){
+  comps++; colors[i]='comparing'; if(j!==undefined)colors[j]='comparing';
+  await hl(ln,j!==undefined?[i,j]:[i]);
+}
+async function swp(i,j,ln){
+  swaps++; colors[i]='swapping'; colors[j]='swapping';
+  [array[i],array[j]]=[array[j],array[i]];
+  await hl(ln,[i,j]);
+}
+function sorted(...idx){ idx.forEach(i=>{if(i>=0&&i<N)colors[i]='sorted';}); }
+function def(...idx){    idx.forEach(i=>{if(i>=0&&i<N)colors[i]='default';}); }
+function setProgress(p){ document.getElementById('progress-fill').style.width=`${p}%`; }
+
+async function bubble(){
+  for(let i=0;i<N-1;i++){
+    await hl(1);
+    for(let j=0;j<N-1-i;j++){
+      await hl(2,[j,j+1]); await comp(j,j+1,3);
+      if(array[j]>array[j+1]) await swp(j,j+1,4);
+      def(j,j+1); setProgress(((i*N+j)/(N*N))*100);
+    }
+    sorted(N-1-i); await hl(5,[N-1-i]);
+  }
+  sorted(0);
+}
+async function selection(){
+  for(let i=0;i<N-1;i++){
+    await hl(1,[i]); let minIdx=i; await hl(2,[minIdx]);
+    for(let j=i+1;j<N;j++){
+      await hl(3,[j,minIdx]); await comp(j,minIdx,4);
+      if(array[j]<array[minIdx]){def(minIdx);minIdx=j;await hl(5,[minIdx]);}
+      else def(j);
+      setProgress(((i*N+j)/(N*N))*100);
+    }
+    if(minIdx!==i) await swp(i,minIdx,6);
+    sorted(i);
+  }
+  sorted(N-1);
+}
+async function insertion(){
+  sorted(0);
+  for(let i=1;i<N;i++){
+    await hl(1,[i]); await hl(2,[i]);
+    let j=i; await hl(3,[j]);
+    while(j>0){
+      await comp(j,j-1,4);
+      if(array[j]<array[j-1]){await swp(j,j-1,5);j--;}
+      else{def(j,j-1);break;}
+    }
+    sorted(i); await hl(6,[j]); setProgress((i/N)*100);
+  }
+}
+async function mergeHelper(l,r){
+  if(l>=r)return;
+  await hl(2,[l,r]);
+  const m=Math.floor((l+r)/2);
+  await mergeHelper(l,m); await mergeHelper(m+1,r);
+  await hl(5,[l,m,r]); await doMerge(l,m,r);
+}
+async function doMerge(l,m,r){
+  const left=array.slice(l,m+1),right=array.slice(m+1,r+1);
+  let i=0,j=0,k=l;
+  await hl(6,[l+i,m+1+j]);
+  while(i<left.length&&j<right.length){
+    comps++; await hl(7,[l+i,m+1+j]);
+    if(left[i]<=right[j]){array[k]=left[i++];}
+    else{array[k]=right[j++];swaps++;}
+    colors[k]='comparing'; flush([k],7); await sleep();
+    if(stopped) throw 'stopped';
+    def(k); k++; setProgress((k/N)*100);
+  }
+  while(i<left.length){array[k]=left[i++];colors[k]='sorted';flush([k],7);await sleep();if(stopped)throw'stopped';k++;}
+  while(j<right.length){array[k]=right[j++];colors[k]='sorted';flush([k],7);await sleep();if(stopped)throw'stopped';k++;}
+}
+async function quickHelper(l,r){
+  if(l>=r){if(l>=0&&l<N)sorted(l);return;}
+  const p=await qPart(l,r); sorted(p);
+  await quickHelper(l,p-1); await quickHelper(p+1,r);
+}
+async function qPart(l,r){
+  colors[r]='pivot'; await hl(1,[r]);
+  let i=l-1; await hl(2);
+  for(let j=l;j<r;j++){
+    await comp(j,r,3);
+    if(array[j]<=array[r]){i++;if(i!==j)await swp(i,j,4);else def(j);}
+    else def(j);
+    setProgress((j/N)*100);
+  }
+  await swp(i+1,r,5); return i+1;
+}
+
+async function startSort(){
+  if(running)return;
+  stopped=false;
+  array=randArr(); colors=Array(N).fill('default');
+  comps=0; swaps=0; startTime=Date.now();
+  document.getElementById('done-msg').style.display='none';
+  document.getElementById('stopped-msg').style.display='none';
+  setProgress(0); buildBars(); buildNumbers(); buildCode();
+  running=true; setRunningUI(true);
+
+  try {
+    if(algo==='bubble')         await bubble();
+    else if(algo==='selection') await selection();
+    else if(algo==='insertion') await insertion();
+    else if(algo==='merge')     {await hl(1);await mergeHelper(0,N-1);}
+    else if(algo==='quick')     await quickHelper(0,N-1);
+
+    if(!stopped){
+      colors=Array(N).fill('sorted');
+      flush([],null); setProgress(100);
+      document.getElementById('s-time').textContent=`${Date.now()-startTime}ms`;
+      document.getElementById('done-msg').style.display='inline';
+    }
+  } catch(e){
+    if(e==='stopped'){
+      document.getElementById('stopped-msg').style.display='inline';
+      document.getElementById('line-indicator').textContent='';
+      codeLines.forEach(cl=>cl.classList.remove('active'));
+    }
+  }
+
+  running=false; setRunningUI(false);
+}
+
+updateInfo();
+newArray();
+</script>
+</body>
+</html>
